@@ -41,7 +41,7 @@ builder.Services.AddDbContext<BbContext>();
 
 string _key = "ESFE2024SecretKeyForTokenAuthentication";
 
-builder.Services.AddSingleton(new JwtAuthentication(_key));
+
 
 builder.Services.AddAuthentication(x =>
 {

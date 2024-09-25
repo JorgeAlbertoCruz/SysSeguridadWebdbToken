@@ -1,6 +1,7 @@
 ﻿// Agregar las siguientes librerias
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
+using System.Security.Cryptography;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using SysSeguridadWebdb.Models;
@@ -14,6 +15,19 @@ namespace SysSeguridadWebdb.Auth
         public JwtAuthentication(string key)
         {
             _key = key;
+        }
+
+        public string EncriptarMD5(string pUsuario)
+        {
+            using (var md5 = MD5.Create())
+            {
+                var result = md5.ComputeHash(Encoding.ASCII.GetBytes(pUsuario));
+                var strEncriptar = "";
+                for (int i = 0; i < result.Length; i++)
+                    strEncriptar += result[i].ToString("x2").ToLower();
+                pUsuario = strEncriptar;
+            }
+            return pUsuario;
         }
 
         public string Authenticate(Usuario pUsuario)

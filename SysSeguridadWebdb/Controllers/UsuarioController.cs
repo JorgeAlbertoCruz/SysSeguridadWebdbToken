@@ -10,32 +10,33 @@ using SysSeguridadWebdb.Auth;
 using SysSeguridadWebdb.Models;
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 
 namespace SysSeguridadWebdb.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize]
     public class UsuarioController : ControllerBase
     {
         private readonly BbContext _context;
-        private readonly JwtAuthentication _jwtAuthentication;
+        private static readonly string _key = "ESFE2024SecretKeyForTokenAuthentication";
+        private readonly JwtAuthentication _jwtAuthentication = new JwtAuthentication(_key);
 
-        public UsuarioController(JwtAuthentication jwtAuthentication, BbContext context)
+        public UsuarioController(BbContext context)
         {
-            _jwtAuthentication = jwtAuthentication;
+          
             _context = context;
           
         }
 
         [HttpPost("login")]
-        public async Task<ActionResult> Login([FromBody] object pUsuario)
+        [AllowAnonymous]
+        public async Task<ActionResult> Login(Usuario pUsuario)
         {
             var option = new JsonSerializerOptions { PropertyNameCaseInsensitive = true };
-            string strUsuario = JsonSerializer.Serialize(pUsuario);
-            Usuario usuario = JsonSerializer.Deserialize<Usuario>(strUsuario, option);
-            Usuario usuario_auth = await _context.Usuario.Where(x => x.Login == usuario.Login &&
-            x.Password == usuario.Password).FirstOrDefaultAsync();
-            if (usuario_auth != null && usuario_auth.Id > 0 && usuario.Login == usuario_auth.Login)
+            Usuario usuario_auth = await _context.Usuario.Where(x => x.Login == pUsuario.Login && x.Password == _jwtAuthentication.EncriptarMD5(pUsuario.Password)).FirstOrDefaultAsync();
+            if (usuario_auth != null && usuario_auth.Id > 0 )
             {
                 var token = _jwtAuthentication.Authenticate(usuario_auth);
                 return Ok(token);
@@ -85,6 +86,12 @@ namespace SysSeguridadWebdb.Controllers
                 return BadRequest();
             }
 
+            // Encriptar la contraseña solo si no está vacía
+            if (!string.IsNullOrEmpty(usuario.Password))
+            {
+                usuario.Password = _jwtAuthentication.EncriptarMD5(usuario.Password);
+            }
+
             _context.Entry(usuario).State = EntityState.Modified;
 
             try
@@ -106,20 +113,26 @@ namespace SysSeguridadWebdb.Controllers
             return NoContent();
         }
 
+
         // POST: api/Usuario
         // To protect from overposting attacks, see https://go.microsoft.com/fwlink/?linkid=2123754
         [HttpPost]
         public async Task<ActionResult<Usuario>> PostUsuario(Usuario usuario)
         {
-          if (_context.Usuario == null)
-          {
-              return Problem("Entity set 'BbContext.Usuario'  is null.");
-          }
+            if (_context.Usuario == null)
+            {
+                return Problem("Entity set 'BbContext.Usuario' is null.");
+            }
+
+            // Encriptar la contraseña antes de guardarla
+            usuario.Password = _jwtAuthentication.EncriptarMD5(usuario.Password);
+
             _context.Usuario.Add(usuario);
             await _context.SaveChangesAsync();
 
             return CreatedAtAction("GetUsuario", new { id = usuario.Id }, usuario);
         }
+
 
         // DELETE: api/Usuario/5
         [HttpDelete("{id}")]
