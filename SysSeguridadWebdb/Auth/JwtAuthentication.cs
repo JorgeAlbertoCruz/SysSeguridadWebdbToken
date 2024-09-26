@@ -17,8 +17,15 @@ namespace SysSeguridadWebdb.Auth
             _key = key;
         }
 
+        /// <summary>
+        /// Método para encriptar strings con MD5
+        /// </summary>
+        /// <param name="pUsuario"></param>
+        /// <returns></returns>
         public string EncriptarMD5(string pUsuario)
         {
+
+            
             using (var md5 = MD5.Create())
             {
                 var result = md5.ComputeHash(Encoding.ASCII.GetBytes(pUsuario));
