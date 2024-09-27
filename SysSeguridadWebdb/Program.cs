@@ -43,9 +43,21 @@ builder.Services.AddSwaggerGen(c =>
 
 builder.Services.AddDbContext<BbContext>(opt => opt.UseSqlServer(builder.Configuration.GetConnectionString("cadenaSQL")));
 
+builder.Services.AddControllers().AddJsonOptions(opt =>
+{
+    opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
+});
+
+var misReglasCors = "ReglasCors";
+builder.Services.AddCors(opt =>
+{
+    opt.AddPolicy(name: misReglasCors, builder =>
+    {
+        builder.AllowAnyOrigin().AllowAnyHeader().AllowAnyMethod();
+    });
+});
+
 string _key = "ESFE2024SecretKeyForTokenAuthentication";
-
-
 
 builder.Services.AddAuthentication(x =>
 {
@@ -66,14 +78,6 @@ builder.Services.AddAuthentication(x =>
  });
 
 
-builder.Services.AddControllers().AddJsonOptions(opt =>
-{
-    opt.JsonSerializerOptions.ReferenceHandler = ReferenceHandler.IgnoreCycles;
-});
-
-
-
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
@@ -82,7 +86,7 @@ var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
 
-
+app.UseCors(misReglasCors);
 
 app.UseAuthentication();
 

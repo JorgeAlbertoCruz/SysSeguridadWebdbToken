@@ -18,8 +18,10 @@ public partial class BbContext : DbContext
     public virtual DbSet<Rol> Rol { get; set; }
 
     public virtual DbSet<Usuario> Usuario { get; set; }
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+    { }
 
-   
+
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<Rol>(entity =>
